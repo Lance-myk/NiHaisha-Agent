@@ -322,6 +322,12 @@ https://github.com/Lance-myk/Traditional-Chinese-Medicine-nihaisha
 
 ---
 
+## 示例网址链接
+
+https://39.170.44.216:8088
+
+---
+
 ### 💖 支持我
 
 如果您觉得这个项目对您有帮助，欢迎扫描下方二维码进行捐赠！

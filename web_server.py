@@ -32,6 +32,29 @@ from agent import TCMAdvisor, CONFIG, SLOTS, slots_summary
 SESSIONS = {}
 SESSION_LOCK = threading.Lock()
 
+# ── 点赞数据（持久化到文件）───────────────────────────
+LIKE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'like_count.json')
+LIKE_LOCK = threading.Lock()
+
+def _load_like_total():
+    """从文件加载点赞总数，默认88。"""
+    if os.path.exists(LIKE_FILE):
+        try:
+            with open(LIKE_FILE, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+                return data.get('total', 88)
+        except (json.JSONDecodeError, IOError):
+            pass
+    return 88
+
+def _save_like_total(total):
+    """保存点赞总数到文件。"""
+    try:
+        with open(LIKE_FILE, 'w', encoding='utf-8') as f:
+            json.dump({'total': total}, f, ensure_ascii=False)
+    except IOError:
+        pass
+
 def get_or_create_session(session_id):
     """获取或创建会话。"""
     with SESSION_LOCK:
@@ -856,36 +879,48 @@ HTML_PAGE = r"""<!DOCTYPE html>
             welcomeEl = welcomeDiv;
         }
 
-        // 点赞功能
-        let likeCount = parseInt(localStorage.getItem('tcm_like_count') || '0');
+        // 点赞功能：每个访问者只能点赞一次，再次点击取消
         let hasLiked = localStorage.getItem('tcm_has_liked') === 'true';
 
-        function updateLikeDisplay() {
+        function updateLikeDisplay(total) {
             const likeBtn = document.getElementById('like-btn');
             const likeCountEl = document.getElementById('like-count');
-            likeCountEl.textContent = likeCount;
+            likeCountEl.textContent = total;
             if (hasLiked) {
                 likeBtn.classList.add('liked');
-            }
-        }
-
-        function toggleLike() {
-            const likeBtn = document.getElementById('like-btn');
-            if (hasLiked) {
-                likeCount--;
-                hasLiked = false;
-                likeBtn.classList.remove('liked');
             } else {
-                likeCount++;
-                hasLiked = true;
-                likeBtn.classList.add('liked');
+                likeBtn.classList.remove('liked');
             }
-            localStorage.setItem('tcm_like_count', likeCount.toString());
-            localStorage.setItem('tcm_has_liked', hasLiked.toString());
-            document.getElementById('like-count').textContent = likeCount;
         }
 
-        // 打赏功能
+        async function toggleLike() {
+            try {
+                const action = hasLiked ? 'unlike' : 'like';
+                const response = await fetch('/api/like', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: action })
+                });
+                const data = await response.json();
+                if (data.total !== undefined) {
+                    hasLiked = !hasLiked;
+                    localStorage.setItem('tcm_has_liked', hasLiked.toString());
+                    updateLikeDisplay(data.total);
+                }
+            } catch (error) {
+                console.error('点赞操作失败:', error);
+            }
+        }
+
+        // 加载点赞数据
+        fetch('/api/like')
+            .then(r => r.json())
+            .then(data => {
+                updateLikeDisplay(data.total);
+            })
+            .catch(() => {
+                updateLikeDisplay(88);
+            });
         function showDonate() {
             document.getElementById('donate-modal').classList.add('active');
         }
@@ -941,6 +976,14 @@ class RequestHandler(BaseHTTPRequestHandler):
             }
             self.wfile.write(json.dumps(data, ensure_ascii=False).encode('utf-8'))
 
+        elif path == '/api/like':
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/json; charset=utf-8')
+            self._send_cors_headers()
+            self.end_headers()
+            total = _load_like_total()
+            self.wfile.write(json.dumps({"total": total}, ensure_ascii=False).encode('utf-8'))
+
         elif path == '/img/1.png':
             self._serve_file('img/1.png', 'image/png')
 
@@ -978,6 +1021,8 @@ class RequestHandler(BaseHTTPRequestHandler):
             self._handle_chat(data)
         elif path == '/api/command':
             self._handle_command(data)
+        elif path == '/api/like':
+            self._handle_like(data)
         else:
             self.send_response(404)
             self.end_headers()
@@ -1024,6 +1069,23 @@ class RequestHandler(BaseHTTPRequestHandler):
             error_msg = json.dumps({"error": str(e)}, ensure_ascii=False)
             self.wfile.write(f"data: {error_msg}\n\n".encode('utf-8'))
             self.wfile.flush()
+
+    def _handle_like(self, data):
+        """处理点赞/取消点赞请求，返回最新总数。"""
+        action = data.get('action', 'like')
+        with LIKE_LOCK:
+            total = _load_like_total()
+            if action == 'like':
+                total += 1
+            elif action == 'unlike' and total > 0:
+                total -= 1
+            _save_like_total(total)
+
+        self.send_response(200)
+        self.send_header('Content-Type', 'application/json; charset=utf-8')
+        self._send_cors_headers()
+        self.end_headers()
+        self.wfile.write(json.dumps({"total": total}, ensure_ascii=False).encode('utf-8'))
 
     def _handle_command(self, data):
         """处理命令请求（/reset, /slots 等）。"""
