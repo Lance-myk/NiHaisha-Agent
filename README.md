@@ -316,6 +316,12 @@ LLM_PROVIDER=ollama     # 本地模型
 
 ---
 
+## 视频学习资料获取链接
+
+https://github.com/Lance-myk/Traditional-Chinese-Medicine-nihaisha
+
+---
+
 ### 💖 支持我
 
 如果您觉得这个项目对您有帮助，欢迎扫描下方二维码进行捐赠！
