@@ -278,19 +278,29 @@ LLM_PROVIDER=ollama     # 本地模型
 ## 项目结构
 
 ```
-├── agent.py              # 主程序（CLI 模式）
-├── web_server.py         # Web 服务器（端口 8866）
-├── knowledge_base.md     # 知识库（倪海厦人纪系列核心知识）
-├── system_prompt.md      # Agent 行为规则
-├── README.md             # 本文件
-├── TUTORIAL.md           # 零基础安装使用教程
-├── LICENSE               # MIT 协议
-├── .env.example          # 配置模板
+├── agent.py                  # 主程序（CLI 模式）
+├── web_server.py             # Web 服务器（端口 8866）
+├── generate_demo.py          # 生成案例对话脚本
+├── knowledge_base.md         # 知识库（倪海厦人纪系列核心知识）
+├── system_prompt.md          # Agent 行为规则（含病症专属问诊槽位）
+├── disease_slots.md          # 病症专属问诊槽位表（12个常见病症）
+├── README.md                 # 本文件
+├── TUTORIAL.md               # 零基础安装使用教程
+├── LICENSE                   # MIT 协议
+├── .env.example              # 配置模板
 ├── .gitignore
-├── 启动.bat              # CLI 一键启动
-├── 启动Web.bat           # Web 一键启动
-└── examples/
-    └── demo_conversation.md  # 案例对话
+├── 启动.bat                  # CLI 一键启动
+├── 启动Web.bat               # Web 一键启动
+├── md/                       # 倪海厦人纪系列原始教材（6部）
+│   ├── 1针灸/
+│   ├── 2神农本草经/
+│   ├── 3黄帝内经/
+│   ├── 4伤寒论/
+│   ├── 5金匮要略/
+│   └── 6天纪/
+├── examples/
+│   └── demo_conversation.md  # 案例对话（真实模型输出）
+└── 中医病症分类表.json        # 从MD提取的病症结构化数据
 ```
 
 ---
