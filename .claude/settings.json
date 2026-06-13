@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Users/Administrator/source/repos/xuefeng-agent-master -type f | head -100)",
+      "Read(//c/Users/Administrator/source/repos/xuefeng-agent-master/**)",
+      "Bash(ls -la /c/Users/Administrator/source/repos/xuefeng-agent-master/)",
+      "Read(//c/Users/Administrator/source/repos/xuefeng-agent-master//**)",
+      "Bash(python -c \"import agent; print\\('agent.py OK'\\)\")",
+      "Bash(python -c \"import web_server; print\\('web_server.py OK'\\)\")"
+    ]
+  }
+}

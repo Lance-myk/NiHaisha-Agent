@@ -1,0 +1,14 @@
+# API 密钥配置文件（包含真实 key，禁止提交）
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# 开发备份
+backup/
+
+# 系统文件
+.DS_Store
+Thumbs.db
